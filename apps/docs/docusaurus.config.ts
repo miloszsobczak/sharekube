@@ -10,7 +10,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'http://docs.sharekube.dev',
+  url: 'https://docs.sharekube.dev',
   // Set the /<baseUrl>/ pathname under which your site is served
   baseUrl: '/',
 
@@ -18,6 +18,8 @@ const config: Config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'miloszsobczak', // Usually your GitHub org/user name.
   projectName: 'sharekube', // Usually your repo name.
+  trailingSlash: false,
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
