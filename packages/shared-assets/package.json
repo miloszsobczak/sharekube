@@ -1,0 +1,12 @@
+{
+  "name": "@sharekube/shared-assets",
+  "version": "1.0.0",
+  "description": "Shared assets for ShareKube projects",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "logo"
+  ]
+} 

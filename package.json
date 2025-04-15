@@ -1,0 +1,15 @@
+{
+  "name": "sharekube",
+  "version": "1.0.0",
+  "private": true,
+  "url": "https://sharekube.dev",
+  "repository": "https://github.com/miloszsobczak/sharekube",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "update-assets": "./scripts/update-assets.sh"
+  },
+  "license": "MIT"
+}
