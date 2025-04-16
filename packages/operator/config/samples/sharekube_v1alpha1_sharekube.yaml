@@ -1,0 +1,39 @@
+apiVersion: sharekube.dev/v1alpha1
+kind: ShareKube
+metadata:
+  name: sample-preview
+  namespace: default
+spec:
+  # Target namespace where resources will be copied
+  targetNamespace: preview
+
+  # Time-to-Live for the preview environment
+  ttl: 1h
+
+  # List of resources to copy
+  resources:
+    # This resource will be copied from the same namespace as this ShareKube resource
+    - kind: Deployment
+      name: nginx-deployment
+
+    # This resource will be copied from the explicitly specified namespace
+    - kind: ConfigMap
+      name: nginx-config
+      namespace: config
+
+    # This resource will be copied from the same namespace as this ShareKube resource
+    - kind: Service
+      name: nginx-service
+
+  # Future feature: Transformation rules to apply to resources
+  # transformationRules:
+  #   - kind: Service
+  #     removeFields:
+  #       - spec.clusterIP
+  #       - spec.clusterIPs
+  #       - status
+
+  # Future feature: Remote cluster configuration
+  # targetCluster:
+  #   name: aws-dev
+  #   kubeconfigSecret: aws-kubeconfig-secret

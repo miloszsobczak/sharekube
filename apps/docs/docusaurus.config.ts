@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'ShareKube',
-  tagline: 'Create temporary preview environments in Kubernetes',
+  title: 'ShareKube Documentation',
+  tagline: 'Learn how to create temporary preview environments in Kubernetes',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -17,7 +17,7 @@ const config: Config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'miloszsobczak', // Usually your GitHub org/user name.
-  projectName: 'sharekube', // Usually your repo name.
+  projectName: 'sharekube',
   trailingSlash: false,
   deploymentBranch: 'gh-pages',
 
@@ -46,8 +46,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // No edit links
-          routeBasePath: '/', // Set docs as the root
+          routeBasePath: '/', // Serve docs at root path
         },
         blog: false,
         theme: {
@@ -89,13 +88,7 @@ const config: Config = {
     },
     footer: {
       style: 'light',
-      logo: {
-        alt: 'ShareKube Logo',
-        src: 'img/logo.svg',
-        href: '/',
-        width: 200,
-      },
-      copyright: `Copyright © ${new Date().getFullYear()} ShareKube Project. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} ShareKube Project.`,
     },
     prism: {
       theme: prismThemes.github,

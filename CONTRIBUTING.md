@@ -1,11 +1,13 @@
----
-id: contributing
-title: Contributing & Development
----
-
-# Contributing & Development
+# Contributing to ShareKube
 
 We welcome contributions to the ShareKube project! This guide will help you set up a development environment and understand how to contribute to the project.
+
+## Related Documents
+
+- [README.md](README.md): Project overview and main documentation
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): Our community guidelines
+- [SECURITY.md](SECURITY.md): Security policy and vulnerability reporting
+- [LICENSE](LICENSE): Apache 2.0 license details
 
 ## Development Environment Setup
 
@@ -16,6 +18,8 @@ We welcome contributions to the ShareKube project! This guide will help you set 
 - Docker for building images
 - kubectl configured for your cluster
 - Operator SDK (optional, for operator development)
+- Node.js 16+ (for documentation site)
+- Yarn (for package management)
 
 ### Getting the Source Code
 
@@ -148,7 +152,7 @@ make test-integration
 
 ## Project Structure
 
-The KubeShare project follows a standard Kubernetes operator structure:
+The ShareKube project follows a standard Kubernetes operator structure:
 
 ```
 ├── api/                  # API definitions (CRDs)
@@ -190,19 +194,34 @@ The KubeShare project follows a standard Kubernetes operator structure:
 3. **Implementation**: Implement the feature with tests
 4. **Documentation**: Update documentation to reflect changes
 
-## Future Transformation Rules Development
+## Documentation Development
 
-When implementing transformation rules (planned future feature):
+The documentation site is hosted at [docs.sharekube.dev](https://docs.sharekube.dev) and built with Docusaurus.
 
-1. Define the transformation in the `pkg/transformation` package
-2. Create a transformation handler for each resource type
-3. Add unit tests for transformations
-4. Update the API documentation
+The documentation includes the following sections:
+- [Overview](https://docs.sharekube.dev/overview)
+- [Getting Started](https://docs.sharekube.dev/getting-started)
+- [API Reference](https://docs.sharekube.dev/api-reference)
+- [Future Roadmap](https://docs.sharekube.dev/future-roadmap)
+- [Contributing](https://docs.sharekube.dev/contributing)
+
+To run the documentation site locally:
+
+```bash
+# Add docs.local.sharekube.dev to your hosts file
+# See hosts.txt for the required entry
+
+# Start the documentation site
+cd apps/docs
+yarn dev
+
+# The site will be available at https://docs.local.sharekube.dev:3000
+```
 
 ## Release Process
 
 1. **Version Bump**: Update version numbers in the code and manifests
-2. **Changelog**: Update the CHANGELOG.md with a summary of changes
+2. **Changelog**: Update the [CHANGELOG.md](CHANGELOG.md) with a summary of changes
 3. **Tag Release**: Create a Git tag for the release
 4. **CI/CD**: The CI pipeline will build and publish artifacts
 
@@ -216,12 +235,12 @@ Join our community:
 
 ## Code of Conduct
 
-We follow the CNCF Code of Conduct. Please be respectful and collaborative in all interactions.
+We follow the [CNCF Code of Conduct](CODE_OF_CONDUCT.md). Please be respectful and collaborative in all interactions.
 
 ## License
 
-KubeShare is licensed under the Apache 2.0 License. All contributions must comply with this license.
+ShareKube is licensed under the Apache 2.0 License. All contributions must comply with this license.
 
 ---
 
-Thank you for considering a contribution to KubeShare! Your help makes the project better for everyone. 
+Thank you for considering a contribution to ShareKube! Your help makes the project better for everyone. 

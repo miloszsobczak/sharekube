@@ -136,10 +136,13 @@ The ShareKube CRD also includes a status section that provides information about
 
 ```yaml
 status:
-  phase: Completed        # Pending, InProgress, Completed, Failed
-  createdAt: "2023-..."   # Timestamp when the copy process started
-  expiresAt: "2023-..."   # Timestamp when the TTL will expire
-  conditions:             # List of conditions for more detailed status
+  phase: Ready              # Initializing, Processing, Ready, Error
+  creationTime: "2023-..."  # Timestamp when the copy process started
+  expirationTime: "2023-..." # Timestamp when the TTL will expire
+  copiedResources:          # List of resources that were successfully copied
+    - "Deployment/default/my-app"
+    - "Service/default/my-app-svc"
+  conditions:               # List of conditions for more detailed status
     - type: ResourcesCopied
       status: "True"
       reason: "AllResourcesCopied"

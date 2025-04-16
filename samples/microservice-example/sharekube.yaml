@@ -1,0 +1,30 @@
+apiVersion: sharekube.dev/v1alpha1
+kind: ShareKube
+metadata:
+  name: sample-app-preview
+  namespace: dev
+spec:
+  targetNamespace: preview
+  ttl: 2h
+  resources:
+    # Database
+    - kind: Deployment
+      name: sample-db
+    - kind: Service
+      name: sample-db-svc
+    
+    # Backend API
+    - kind: Deployment
+      name: sample-api
+    - kind: Service
+      name: sample-api-svc
+    
+    # Frontend
+    - kind: Deployment
+      name: sample-frontend
+    - kind: Service
+      name: sample-frontend-svc
+    
+    # Configuration
+    - kind: ConfigMap
+      name: sample-app-config 

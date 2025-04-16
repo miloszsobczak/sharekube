@@ -1,7 +1,10 @@
 {
-  "name": "sharekube",
+  "name": "@miloszsobczak/sharekube",
   "version": "1.0.0",
   "private": true,
+  "description": "Sharekube is a tool that allows you to share your Kubernetes resources with others.",
+  "author": "Milosz Sobczak <milosz.sobczak@gmail.com>",
+  "homepage": "https://sharekube.dev",
   "url": "https://sharekube.dev",
   "repository": "https://github.com/miloszsobczak/sharekube",
   "workspaces": [
@@ -11,5 +14,5 @@
   "scripts": {
     "update-assets": "./scripts/update-assets.sh"
   },
-  "license": "MIT"
+  "license": "Apache-2.0"
 }

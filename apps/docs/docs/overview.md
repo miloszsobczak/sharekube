@@ -16,7 +16,7 @@ The ShareKube CRD is the primary interface for users. It allows you to define:
 - **Source resources** to be copied
 - **Target namespace** where resources will be deployed
 - **Time-to-Live (TTL)** for automatic cleanup
-- **Future: Transformation rules** for resource modification
+- **Future: Advanced transformation rules** for resource modification
 
 ### 2. ShareKube Operator
 
@@ -24,17 +24,23 @@ The ShareKube operator is responsible for:
 
 - Watching for ShareKube CRD instances
 - Copying specified resources from source to target namespaces
-- Applying any defined transformation rules (future feature)
+- Applying basic transformations for compatibility (e.g., clearing Service ClusterIPs)
 - Managing the lifecycle of copied resources
 - Cleaning up resources when the TTL expires
 
-### 3. Transformation Pipeline (Future Feature)
+### 3. Transformation Pipeline
 
-While not in the current MVP, the transformation pipeline will be responsible for:
+The transformation pipeline handles modifications to resources during the copy process:
 
-- Modifying resources during the copy process
-- Removing fields that might cause conflicts (like `spec.clusterIP` for Services)
-- Applying custom transformations based on resource type
+**Current Features:**
+- Automatic removal of cluster-specific fields (like `spec.clusterIP` for Services)
+- Updating namespace references
+- Adding tracking labels for lifecycle management
+
+**Future Features:**
+- User-defined transformation rules via the CRD
+- Custom field removal based on resource type
+- Advanced transformations based on resource relationships
 
 ## Architecture Diagram
 
@@ -60,7 +66,7 @@ While not in the current MVP, the transformation pipeline will be responsible fo
 1. **Define and Apply**: User creates a ShareKube CRD specifying resources to copy
 2. **Detection**: The ShareKube operator detects the new CRD
 3. **Resource Copying**: The operator locates and copies specified resources
-4. **Future: Transformation**: Resources are transformed according to rules
+4. **Transformation**: Resources are automatically transformed for compatibility
 5. **Deployment**: Copied resources are deployed to the target namespace
 6. **Lifecycle Management**: The operator tracks the TTL and cleans up resources
 

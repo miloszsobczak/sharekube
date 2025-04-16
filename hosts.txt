@@ -1,6 +1,8 @@
 # ShareKube Local Development Hosts
 # Add these entries to your /etc/hosts file to use the local development domains
-# The site will be accessible via HTTPS at https://docs.local.sharekube.dev:3000
 
-127.0.0.1 local.sharekube.dev 
+# Main landing page at https://local.sharekube.dev:3000
+127.0.0.1 local.sharekube.dev
+
+# Documentation available at https://docs.local.sharekube.dev:3000/docs
 127.0.0.1 docs.local.sharekube.dev 

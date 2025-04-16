@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-db
+  namespace: dev
+  labels:
+    app: sample-app
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-app
+      component: database
+  template:
+    metadata:
+      labels:
+        app: sample-app
+        component: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:14
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "password123"
+        - name: POSTGRES_USER
+          value: "sampleuser"
+        - name: POSTGRES_DB
+          value: "sampledb"
+        ports:
+        - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-db-svc
+  namespace: dev
+  labels:
+    app: sample-app
+    component: database
+spec:
+  selector:
+    app: sample-app
+    component: database
+  ports:
+  - port: 5432
+    targetPort: 5432 

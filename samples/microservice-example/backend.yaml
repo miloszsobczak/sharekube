@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-api
+  namespace: dev
+  labels:
+    app: sample-app
+    component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-app
+      component: api
+  template:
+    metadata:
+      labels:
+        app: sample-app
+        component: api
+    spec:
+      containers:
+      - name: api
+        image: nginx:latest  # Replace with your actual API image
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "sample-db-svc"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "sampleuser"
+        - name: DB_PASSWORD
+          value: "password123"
+        - name: DB_NAME
+          value: "sampledb"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-api-svc
+  namespace: dev
+  labels:
+    app: sample-app
+    component: api
+spec:
+  selector:
+    app: sample-app
+    component: api
+  ports:
+  - port: 8080
+    targetPort: 8080 

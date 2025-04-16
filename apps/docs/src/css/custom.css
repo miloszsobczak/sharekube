@@ -6,15 +6,17 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-color-primary: #00c4a1;
+  --ifm-color-primary-dark: #00b091;
+  --ifm-color-primary-darker: #00a689;
+  --ifm-color-primary-darkest: #008971;
+  --ifm-color-primary-light: #00d8b1;
+  --ifm-color-primary-lighter: #00e2b9;
+  --ifm-color-primary-lightest: #00ffd1;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --sharekube-secondary-color: #07eeba;
+  --sharekube-secondary-hover: #06e4b2;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -27,37 +29,56 @@
   --ifm-color-primary-lighter: #32d8b4;
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --sharekube-secondary-color: #07eeba;
+  --sharekube-secondary-hover: #06e4b2;
 }
 
-/* Custom footer style */
+/* Custom footer style - LIGHT MODE */
 .footer {
   background-color: white;
   color: #333333;
 }
 
-/* Target footer logo and all possible containers */
-.footer .footer__logo,
-.footer [class*="footerLogo"],
-.footer a[href="/"] img,
-.footer a img {
-  opacity: 1 !important;
-  max-width: 100%;
-  height: auto;
-}
-
-/* Target any link in footer containing an image */
-.footer a:has(img) {
-  opacity: 1 !important;
-}
-
-/* Target all possible logo link variations */
-.footer a[class*="footerLogo"],
-.footer .footer__logo-link,
-.footer a[href="/"] {
-  opacity: 1 !important;
-  transition: none !important;
-}
-
 .footer .footer__copyright {
   color: #333333;
+}
+
+/* Custom footer style - DARK MODE */
+[data-theme='dark'] .footer {
+  background-color: #1b1b1d;
+  color: #e3e3e3;
+}
+
+[data-theme='dark'] .footer .footer__copyright {
+  color: #e3e3e3;
+}
+
+/* Style for the GitHub button on the homepage hero section - LIGHT MODE */
+header.heroBanner .buttons a[href^="https://github.com"],
+.heroBanner .buttons a[href*="github.com"] {
+  background-color: var(--sharekube-secondary-color) !important;
+  color: white !important;
+  border-color: var(--sharekube-secondary-color) !important;
+  transition: all 0.2s ease !important;
+}
+
+header.heroBanner .buttons a[href^="https://github.com"]:hover,
+.heroBanner .buttons a[href*="github.com"]:hover {
+  background-color: var(--sharekube-secondary-hover) !important;
+  border-color: var(--sharekube-secondary-hover) !important;
+  text-decoration: none !important;
+}
+
+/* Style for the GitHub button on the homepage hero section - DARK MODE */
+[data-theme='dark'] header.heroBanner .buttons a[href^="https://github.com"],
+[data-theme='dark'] .heroBanner .buttons a[href*="github.com"] {
+  background-color: var(--sharekube-secondary-color) !important;
+  color: #1a1a1a !important;
+  border-color: var(--sharekube-secondary-color) !important;
+}
+
+[data-theme='dark'] header.heroBanner .buttons a[href^="https://github.com"]:hover,
+[data-theme='dark'] .heroBanner .buttons a[href*="github.com"]:hover {
+  background-color: var(--sharekube-secondary-hover) !important;
+  border-color: var(--sharekube-secondary-hover) !important;
 }

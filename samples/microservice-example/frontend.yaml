@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-frontend
+  namespace: dev
+  labels:
+    app: sample-app
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-app
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: sample-app
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:latest  # Replace with your actual frontend image
+        ports:
+        - containerPort: 80
+        env:
+        - name: API_URL
+          value: "http://sample-api-svc:8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-frontend-svc
+  namespace: dev
+  labels:
+    app: sample-app
+    component: frontend
+spec:
+  selector:
+    app: sample-app
+    component: frontend
+  ports:
+  - port: 80
+    targetPort: 80 

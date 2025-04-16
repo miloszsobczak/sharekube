@@ -27,19 +27,23 @@ echo -e "${GREEN}Installing mkcert root CA (you may be prompted for your passwor
 mkcert -install
 
 # Generate certificates for local domains
-echo -e "${GREEN}Generating certificates for docs.local.sharekube.dev...${NC}"
+echo -e "${GREEN}Generating certificates for local.sharekube.dev and docs.local.sharekube.dev...${NC}"
 cd "$CERT_DIR"
-mkcert docs.local.sharekube.dev "*.local.sharekube.dev"
+mkcert local.sharekube.dev docs.local.sharekube.dev "*.local.sharekube.dev"
 
 # Create key.pem and cert.pem symlinks (conventional names used by many Node.js servers)
 echo -e "${GREEN}Creating key.pem and cert.pem symlinks...${NC}"
-ln -sf "docs.local.sharekube.dev+1-key.pem" key.pem
-ln -sf "docs.local.sharekube.dev+1.pem" cert.pem
+ln -sf "local.sharekube.dev+2-key.pem" key.pem
+ln -sf "local.sharekube.dev+2.pem" cert.pem
 
 # Remind about /etc/hosts
-echo -e "${YELLOW}Don't forget to add the following line to your /etc/hosts file:${NC}"
+echo -e "${YELLOW}Don't forget to add the following lines to your /etc/hosts file:${NC}"
+echo -e "${YELLOW}127.0.0.1 local.sharekube.dev${NC}"
 echo -e "${YELLOW}127.0.0.1 docs.local.sharekube.dev${NC}"
 
 echo -e "${GREEN}✅ Certificates generated successfully in ${CERT_DIR}${NC}"
 echo -e "${GREEN}To start the dev server with HTTPS, run:${NC}"
-echo -e "${YELLOW}cd apps/docs && yarn dev${NC}" 
+echo -e "${YELLOW}cd apps/docs && yarn dev${NC}"
+echo -e "${GREEN}The site will be available at:${NC}"
+echo -e "${YELLOW}https://local.sharekube.dev:3000${NC} - Main site"
+echo -e "${YELLOW}https://local.sharekube.dev:3000/docs${NC} - Documentation" 

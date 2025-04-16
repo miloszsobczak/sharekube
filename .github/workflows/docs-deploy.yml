@@ -1,4 +1,4 @@
-name: Deploy Docs to GitHub Pages
+name: Deploy Documentation Site
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 # Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # Build job
@@ -35,15 +35,13 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
         
-      - name: Build docs
+      - name: Build documentation site
         run: |
           cd apps/docs
           yarn build
+          # Create a CNAME file for custom domain
+          echo "docs.sharekube.dev" > build/CNAME
           
-      - name: Debug directory content
-        run: |
-          ls -la apps/docs/build
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

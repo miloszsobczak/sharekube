@@ -1,0 +1,14 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @miloszsobczak will be requested for review when someone 
+# opens a pull request.
+*       @miloszsobczak
+
+# Operator code
+/packages/operator/    @miloszsobczak
+
+# Documentation
+/apps/docs/    @miloszsobczak
+
+# GitHub workflows
+/.github/workflows/    @miloszsobczak 

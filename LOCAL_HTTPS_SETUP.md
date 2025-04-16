@@ -2,6 +2,12 @@
 
 This guide will help you set up HTTPS for local development of the ShareKube documentation site.
 
+## Related Documentation
+
+For more information about ShareKube, please visit:
+- [Main documentation site](https://docs.sharekube.dev)
+- [Contributing guide](https://docs.sharekube.dev/contributing)
+
 ## Prerequisites
 
 - [mkcert](https://github.com/FiloSottile/mkcert) - A simple tool for making locally-trusted development certificates
@@ -73,6 +79,8 @@ Add the following line to your `/etc/hosts` file:
 ```
 127.0.0.1 docs.local.sharekube.dev
 ```
+
+You can find a sample hosts file in the repository at [hosts.txt](hosts.txt).
 
 ## Starting the Development Server
 
