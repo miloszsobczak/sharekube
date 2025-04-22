@@ -1,0 +1,41 @@
+# ShareKube Project Assistant
+
+## Project Overview
+- ShareKube is a Kubernetes extension that creates temporary preview environments by copying resources between namespaces
+- Primary Languages: Go (operator), TypeScript (documentation)
+- Structure: Monorepo with apps/ and packages/ directories
+
+## Coding Standards
+- Go code:
+  - Use tabs for indentation
+  - Comprehensive error handling
+  - Compliance with Kubernetes controller patterns
+  - Proper API comments
+  - Unit tests for new functionality
+
+- TypeScript/JavaScript code:
+  - Use 2-space indentation
+  - Follow React/Docusaurus best practices
+
+## Key Components
+- Operator: Kubernetes controller managing resource copying
+- API: ShareKube CRD definitions
+- Documentation: Docusaurus-based site
+
+## Critical Guidelines
+- Ensure compatibility with Kubernetes patterns
+- Validate resource definitions against Kubernetes API standards
+- Consider security implications of resource copying
+- Follow reconciliation patterns for controller logic
+- Maintain backward compatibility in API changes
+
+## Code Language Policy
+- ALL code, comments, documentation, variable names, and commit messages MUST be written in English
+- This applies even if chat conversations are in another language
+- Maintain consistent English terminology throughout the codebase
+
+## Priorities
+1. Clear error handling and recovery
+2. Resource synchronization performance
+3. Security of cross-namespace operations
+4. Documentation clarity for users
