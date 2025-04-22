@@ -1,0 +1,67 @@
+name: Release Operator
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+
+      - name: Create combined operator manifest
+        run: |
+          # Create temporary directory
+          mkdir -p temp-manifests
+          
+          # Copy the CRD
+          cp packages/operator/config/crd/bases/sharekube.dev_sharekubes.yaml temp-manifests/
+          
+          # Copy the manager deployment and permissions
+          cp packages/operator/config/manager/manager.yaml temp-manifests/
+          
+          # Combine the files into a single manifest
+          echo "# ShareKube Operator Manifest" > sharekube-operator.yaml
+          echo "# Version: main-${GITHUB_SHA::8}" >> sharekube-operator.yaml
+          echo "# Generated: $(date)" >> sharekube-operator.yaml
+          echo "" >> sharekube-operator.yaml
+          
+          # Concatenate the files with separator
+          cat temp-manifests/sharekube.dev_sharekubes.yaml >> sharekube-operator.yaml
+          echo "---" >> sharekube-operator.yaml
+          cat temp-manifests/manager.yaml >> sharekube-operator.yaml
+          
+          # Clean up temporary directory
+          rm -rf temp-manifests
+      
+      # Update or create the "latest" release
+      - name: Update Latest Release
+        if: github.ref == 'refs/heads/main'
+        id: update_latest
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          makeLatest: true
+          name: "Latest Development Build"
+          tag: "latest"
+          commit: ${{ github.sha }}
+          body: "Automated development build from main branch\nCommit: ${{ github.sha }}\nBuilt on: $(date)"
+          artifacts: "sharekube-operator.yaml"
+          
+      - name: Create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sharekube-operator-manifest
+          path: sharekube-operator.yaml 

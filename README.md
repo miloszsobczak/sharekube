@@ -62,6 +62,8 @@ EOF
 kubectl get deployments,services -n preview-env
 ```
 
+> **Note**: The operator manifest will be available at the above URL after the first GitHub release.
+
 ## 📚 Documentation
 
 For comprehensive documentation, visit [docs.sharekube.dev](https://docs.sharekube.dev)
@@ -78,6 +80,8 @@ For comprehensive documentation, visit [docs.sharekube.dev](https://docs.shareku
 # Install the ShareKube operator
 kubectl apply -f https://github.com/miloszsobczak/sharekube/releases/latest/download/sharekube-operator.yaml
 ```
+
+> **Note**: The operator manifest will be available at the above URL after the first GitHub release.
 
 ## 💻 Development
 
