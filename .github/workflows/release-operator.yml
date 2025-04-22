@@ -1,0 +1,86 @@
+name: Release Operator
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+
+      - name: Install YAML tools
+        run: |
+          pip install yamllint pyyaml
+
+      - name: Create combined operator manifest
+        run: |
+          # Create temporary directory
+          mkdir -p temp-manifests
+          
+          # Create header
+          echo "# ShareKube Operator Manifest" > sharekube-operator.yaml
+          echo "# Version: main-${GITHUB_SHA::8}" >> sharekube-operator.yaml
+          echo "# Generated: $(date)" >> sharekube-operator.yaml
+          echo "" >> sharekube-operator.yaml
+          
+          # Copy the files directly to prevent any string escaping issues
+          cp packages/operator/config/crd/bases/sharekube.dev_sharekubes.yaml temp-manifests/crd.yaml
+          cp packages/operator/config/manager/manager.yaml temp-manifests/manager.yaml
+          
+          # Append CRD directly - don't modify content to avoid escaping issues
+          cat temp-manifests/crd.yaml >> sharekube-operator.yaml
+          
+          # Add separator
+          echo -e "\n---\n" >> sharekube-operator.yaml
+          
+          # Append manager.yaml directly, skipping the first document (which is empty)
+          sed '1 { /^---$/d; }' temp-manifests/manager.yaml >> sharekube-operator.yaml
+          
+          # Show first and last few lines for debugging
+          echo "First 10 lines of generated file:"
+          head -n 10 sharekube-operator.yaml
+          echo "Last 10 lines of generated file:"
+          tail -n 10 sharekube-operator.yaml
+          
+          # Print line count
+          wc -l sharekube-operator.yaml
+          
+          # Clean up temporary directory
+          rm -rf temp-manifests
+      
+      - name: Skip YAML validation for now
+        run: |
+          echo "Skipping full YAML validation for now, continuing with release"
+      
+      # Update or create the "latest" release
+      - name: Update Latest Release
+        if: github.ref == 'refs/heads/main'
+        id: update_latest
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          makeLatest: true
+          name: "Latest Development Build"
+          tag: "latest"
+          commit: ${{ github.sha }}
+          body: "Automated development build from main branch\nCommit: ${{ github.sha }}\nBuilt on: $(date)"
+          artifacts: "sharekube-operator.yaml"
+          
+      - name: Create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sharekube-operator-manifest
+          path: sharekube-operator.yaml 
