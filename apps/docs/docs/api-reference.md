@@ -122,6 +122,10 @@ The `ttl` field specifies how long the preview environment should exist. After t
 2. Set the ShareKube CRD status to indicate completion
 3. Not delete the target namespace itself (this should be handled separately)
 
+### Resource Ownership
+
+All resources copied by ShareKube are created with an owner reference pointing to the ShareKube resource. This ensures that when the ShareKube resource is deleted (either manually or when the TTL expires), Kubernetes garbage collection will automatically delete all copied resources. This provides a clean and reliable cleanup mechanism using built-in Kubernetes functionality.
+
 ### Error Handling
 
 If a resource cannot be copied, the ShareKube operator will:

@@ -20,14 +20,16 @@ type ResourceHandler struct {
 	client    client.Client
 	dynClient dynamic.Interface
 	scheme    *runtime.Scheme
+	ownerRef  metav1.OwnerReference
 }
 
 // NewResourceHandler creates a new ResourceHandler
-func NewResourceHandler(client client.Client, dynClient dynamic.Interface, scheme *runtime.Scheme) *ResourceHandler {
+func NewResourceHandler(client client.Client, dynClient dynamic.Interface, scheme *runtime.Scheme, ownerRef metav1.OwnerReference) *ResourceHandler {
 	return &ResourceHandler{
 		client:    client,
 		dynClient: dynClient,
 		scheme:    scheme,
+		ownerRef:  ownerRef,
 	}
 }
 
@@ -65,10 +67,11 @@ func (h *ResourceHandler) copyDeployment(ctx context.Context, name, sourceNamesp
 	// Create a new deployment for the target
 	newDeploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        srcDeploy.Name,
-			Namespace:   targetNamespace,
-			Labels:      srcDeploy.Labels,
-			Annotations: srcDeploy.Annotations,
+			Name:            srcDeploy.Name,
+			Namespace:       targetNamespace,
+			Labels:          srcDeploy.Labels,
+			Annotations:     srcDeploy.Annotations,
+			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Spec: srcDeploy.Spec,
 	}
@@ -107,10 +110,11 @@ func (h *ResourceHandler) copyService(ctx context.Context, name, sourceNamespace
 	// Create a new service for the target
 	newSvc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        srcSvc.Name,
-			Namespace:   targetNamespace,
-			Labels:      srcSvc.Labels,
-			Annotations: srcSvc.Annotations,
+			Name:            srcSvc.Name,
+			Namespace:       targetNamespace,
+			Labels:          srcSvc.Labels,
+			Annotations:     srcSvc.Annotations,
+			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Spec: srcSvc.Spec,
 	}
@@ -153,10 +157,11 @@ func (h *ResourceHandler) copyConfigMap(ctx context.Context, name, sourceNamespa
 	// Create a new configmap for the target
 	newCm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        srcCm.Name,
-			Namespace:   targetNamespace,
-			Labels:      srcCm.Labels,
-			Annotations: srcCm.Annotations,
+			Name:            srcCm.Name,
+			Namespace:       targetNamespace,
+			Labels:          srcCm.Labels,
+			Annotations:     srcCm.Annotations,
+			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Data:       srcCm.Data,
 		BinaryData: srcCm.BinaryData,
@@ -196,10 +201,11 @@ func (h *ResourceHandler) copySecret(ctx context.Context, name, sourceNamespace,
 	// Create a new secret for the target
 	newSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        srcSecret.Name,
-			Namespace:   targetNamespace,
-			Labels:      srcSecret.Labels,
-			Annotations: srcSecret.Annotations,
+			Name:            srcSecret.Name,
+			Namespace:       targetNamespace,
+			Labels:          srcSecret.Labels,
+			Annotations:     srcSecret.Annotations,
+			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Type:       srcSecret.Type,
 		Data:       srcSecret.Data,
@@ -255,6 +261,11 @@ func (h *ResourceHandler) copyGenericResource(ctx context.Context, kind, name, s
 	newResource.SetSelfLink("")
 	newResource.SetManagedFields(nil)
 
+	// Add owner reference
+	ownerRefs := newResource.GetOwnerReferences()
+	ownerRefs = append(ownerRefs, h.ownerRef)
+	newResource.SetOwnerReferences(ownerRefs)
+
 	// Remove status field if present
 	unstructured.RemoveNestedField(newResource.Object, "status")
 
@@ -301,4 +312,4 @@ func getGVRForKind(kind string) (schema.GroupVersionResource, error) {
 	}
 
 	return gvr, nil
-} 
+}

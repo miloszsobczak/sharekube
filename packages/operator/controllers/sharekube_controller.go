@@ -64,7 +64,7 @@ func (r *ShareKubeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		now := metav1.Now()
 		sharekube.Status.Phase = "Initializing"
 		sharekube.Status.CreationTime = &now
-		
+
 		// Calculate expiration time based on TTL
 		ttlDuration, err := time.ParseDuration(sharekube.Spec.TTL)
 		if err != nil {
@@ -76,10 +76,10 @@ func (r *ShareKubeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			}
 			return ctrl.Result{}, err
 		}
-		
+
 		expirationTime := metav1.NewTime(now.Add(ttlDuration))
 		sharekube.Status.ExpirationTime = &expirationTime
-		
+
 		if err := r.Status().Update(ctx, sharekube); err != nil {
 			logger.Error(err, "Failed to update ShareKube status")
 			return ctrl.Result{}, err
@@ -170,8 +170,18 @@ func (r *ShareKubeReconciler) processResources(ctx context.Context, sharekube *s
 	logger := log.FromContext(ctx)
 	var copiedResources []string
 
-	// Create resource handler
-	resourceHandler := resources.NewResourceHandler(r.Client, r.DynClient, r.Scheme)
+	// Create owner reference for all copied resources
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         sharekube.APIVersion,
+		Kind:               sharekube.Kind,
+		Name:               sharekube.Name,
+		UID:                sharekube.UID,
+		Controller:         &[]bool{true}[0],
+		BlockOwnerDeletion: &[]bool{true}[0],
+	}
+
+	// Create resource handler with owner reference
+	resourceHandler := resources.NewResourceHandler(r.Client, r.DynClient, r.Scheme, ownerRef)
 
 	for _, resource := range sharekube.Spec.Resources {
 		resourceNamespace := resource.Namespace
@@ -179,18 +189,18 @@ func (r *ShareKubeReconciler) processResources(ctx context.Context, sharekube *s
 			resourceNamespace = sharekube.Namespace
 		}
 
-		logger.Info("Copying resource", 
-			"Kind", resource.Kind, 
-			"Name", resource.Name, 
-			"SourceNamespace", resourceNamespace, 
+		logger.Info("Copying resource",
+			"Kind", resource.Kind,
+			"Name", resource.Name,
+			"SourceNamespace", resourceNamespace,
 			"TargetNamespace", sharekube.Spec.TargetNamespace)
 
 		// Use the resource handler to copy the resource
 		err := resourceHandler.CopyResource(ctx, resource.Kind, resource.Name, resourceNamespace, sharekube.Spec.TargetNamespace)
 		if err != nil {
-			logger.Error(err, "Failed to copy resource", 
-				"Kind", resource.Kind, 
-				"Name", resource.Name, 
+			logger.Error(err, "Failed to copy resource",
+				"Kind", resource.Kind,
+				"Name", resource.Name,
 				"SourceNamespace", resourceNamespace)
 			continue
 		}
@@ -209,10 +219,12 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 
 	// Check if finalizer is present
 	if controllerutil.ContainsFinalizer(sharekube, ShareKubeFinalizer) {
-		// Clean up all resources in the target namespace that were created by this ShareKube
+		// With owner references, Kubernetes will automatically delete dependent resources
+		// We don't need to manually clean up anymore, but we still do it for resources
+		// that might have been created before owner references were implemented
 		if err := r.cleanupResources(ctx, sharekube); err != nil {
-			logger.Error(err, "Failed to clean up resources")
-			return ctrl.Result{}, err
+			logger.Error(err, "Failed to clean up legacy resources")
+			// Don't return error here, continue with finalizer removal
 		}
 
 		// Remove finalizer to allow deletion
@@ -226,10 +238,11 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 	return ctrl.Result{}, nil
 }
 
-// cleanupResources removes all resources that were created by this ShareKube
+// cleanupResources removes legacy resources that were created by this ShareKube
+// This is mainly for backward compatibility with resources created before owner references
 func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *sharekubev1alpha1.ShareKube) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Cleaning up resources", "TargetNamespace", sharekube.Spec.TargetNamespace)
+	logger.Info("Cleaning up legacy resources without owner references", "TargetNamespace", sharekube.Spec.TargetNamespace)
 
 	// Create Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(r.Config)
@@ -240,7 +253,7 @@ func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *s
 
 	// Find resources with our tracking label in the target namespace
 	labelSelector := "sharekube.dev/copied=true"
-	
+
 	// Delete deployments
 	if err := clientset.AppsV1().Deployments(sharekube.Spec.TargetNamespace).DeleteCollection(
 		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector}); err != nil {
@@ -281,4 +294,4 @@ func (r *ShareKubeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sharekubev1alpha1.ShareKube{}).
 		Complete(r)
-} 
+}
