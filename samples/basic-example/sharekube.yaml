@@ -5,7 +5,7 @@ metadata:
   namespace: dev
 spec:
   targetNamespace: preview
-  ttl: 2h
+  ttl: 30s
   resources:
     # Frontend
     - kind: Deployment

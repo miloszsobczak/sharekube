@@ -19,16 +19,10 @@ Before you begin, make sure you have:
 
 ### Install with kubectl
 
-1. Install the ShareKube CRD:
+Install the ShareKube operator with a single command:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/miloszsobczak/sharekube/main/packages/operator/config/crd/bases/sharekube.dev_sharekubes.yaml
-```
-
-2. Install the ShareKube operator:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/miloszsobczak/sharekube/main/packages/operator/config/manager/manager.yaml
+kubectl apply -f https://github.com/miloszsobczak/sharekube/releases/latest/download/sharekube-operator.yaml
 ```
 
 The operator will be installed in the `sharekube-system` namespace by default.

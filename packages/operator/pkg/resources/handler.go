@@ -21,15 +21,20 @@ type ResourceHandler struct {
 	dynClient dynamic.Interface
 	scheme    *runtime.Scheme
 	ownerRef  metav1.OwnerReference
+	// Track ShareKube info for labeling
+	sharekubeName      string
+	sharekubeNamespace string
 }
 
 // NewResourceHandler creates a new ResourceHandler
-func NewResourceHandler(client client.Client, dynClient dynamic.Interface, scheme *runtime.Scheme, ownerRef metav1.OwnerReference) *ResourceHandler {
+func NewResourceHandler(client client.Client, dynClient dynamic.Interface, scheme *runtime.Scheme, ownerRef metav1.OwnerReference, sharekubeName, sharekubeNamespace string) *ResourceHandler {
 	return &ResourceHandler{
-		client:    client,
-		dynClient: dynClient,
-		scheme:    scheme,
-		ownerRef:  ownerRef,
+		client:             client,
+		dynClient:          dynClient,
+		scheme:             scheme,
+		ownerRef:           ownerRef,
+		sharekubeName:      sharekubeName,
+		sharekubeNamespace: sharekubeNamespace,
 	}
 }
 
@@ -67,21 +72,23 @@ func (h *ResourceHandler) copyDeployment(ctx context.Context, name, sourceNamesp
 	// Create a new deployment for the target
 	newDeploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            srcDeploy.Name,
-			Namespace:       targetNamespace,
-			Labels:          srcDeploy.Labels,
-			Annotations:     srcDeploy.Annotations,
-			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
+			Name:        srcDeploy.Name,
+			Namespace:   targetNamespace,
+			Labels:      srcDeploy.Labels,
+			Annotations: srcDeploy.Annotations,
+			// Don't set owner references across namespaces - it won't work
+			// OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Spec: srcDeploy.Spec,
 	}
 
-	// Add label to track resources created by ShareKube
+	// Add labels to track resources created by ShareKube
 	if newDeploy.Labels == nil {
 		newDeploy.Labels = make(map[string]string)
 	}
-	newDeploy.Labels["sharekube.dev/copied"] = "true"
-	newDeploy.Labels["sharekube.dev/source-namespace"] = sourceNamespace
+	// Only keep ownership labels - simplify tracking to the minimum needed for cleanup
+	newDeploy.Labels["sharekube.dev/owner-name"] = h.sharekubeName
+	newDeploy.Labels["sharekube.dev/owner-namespace"] = h.sharekubeNamespace
 
 	// Remove resource version from metadata
 	newDeploy.ResourceVersion = ""
@@ -110,21 +117,23 @@ func (h *ResourceHandler) copyService(ctx context.Context, name, sourceNamespace
 	// Create a new service for the target
 	newSvc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            srcSvc.Name,
-			Namespace:       targetNamespace,
-			Labels:          srcSvc.Labels,
-			Annotations:     srcSvc.Annotations,
-			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
+			Name:        srcSvc.Name,
+			Namespace:   targetNamespace,
+			Labels:      srcSvc.Labels,
+			Annotations: srcSvc.Annotations,
+			// Don't set owner references across namespaces - it won't work
+			// OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Spec: srcSvc.Spec,
 	}
 
-	// Add label to track resources created by ShareKube
+	// Add labels to track resources created by ShareKube
 	if newSvc.Labels == nil {
 		newSvc.Labels = make(map[string]string)
 	}
-	newSvc.Labels["sharekube.dev/copied"] = "true"
-	newSvc.Labels["sharekube.dev/source-namespace"] = sourceNamespace
+	// Only keep ownership labels - simplify tracking to the minimum needed for cleanup
+	newSvc.Labels["sharekube.dev/owner-name"] = h.sharekubeName
+	newSvc.Labels["sharekube.dev/owner-namespace"] = h.sharekubeNamespace
 
 	// Remove resource version from metadata
 	newSvc.ResourceVersion = ""
@@ -157,22 +166,24 @@ func (h *ResourceHandler) copyConfigMap(ctx context.Context, name, sourceNamespa
 	// Create a new configmap for the target
 	newCm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            srcCm.Name,
-			Namespace:       targetNamespace,
-			Labels:          srcCm.Labels,
-			Annotations:     srcCm.Annotations,
-			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
+			Name:        srcCm.Name,
+			Namespace:   targetNamespace,
+			Labels:      srcCm.Labels,
+			Annotations: srcCm.Annotations,
+			// Don't set owner references across namespaces - it won't work
+			// OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Data:       srcCm.Data,
 		BinaryData: srcCm.BinaryData,
 	}
 
-	// Add label to track resources created by ShareKube
+	// Add labels to track resources created by ShareKube
 	if newCm.Labels == nil {
 		newCm.Labels = make(map[string]string)
 	}
-	newCm.Labels["sharekube.dev/copied"] = "true"
-	newCm.Labels["sharekube.dev/source-namespace"] = sourceNamespace
+	// Only keep ownership labels - simplify tracking to the minimum needed for cleanup
+	newCm.Labels["sharekube.dev/owner-name"] = h.sharekubeName
+	newCm.Labels["sharekube.dev/owner-namespace"] = h.sharekubeNamespace
 
 	// Remove resource version from metadata
 	newCm.ResourceVersion = ""
@@ -201,23 +212,25 @@ func (h *ResourceHandler) copySecret(ctx context.Context, name, sourceNamespace,
 	// Create a new secret for the target
 	newSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            srcSecret.Name,
-			Namespace:       targetNamespace,
-			Labels:          srcSecret.Labels,
-			Annotations:     srcSecret.Annotations,
-			OwnerReferences: []metav1.OwnerReference{h.ownerRef},
+			Name:        srcSecret.Name,
+			Namespace:   targetNamespace,
+			Labels:      srcSecret.Labels,
+			Annotations: srcSecret.Annotations,
+			// Don't set owner references across namespaces - it won't work
+			// OwnerReferences: []metav1.OwnerReference{h.ownerRef},
 		},
 		Type:       srcSecret.Type,
 		Data:       srcSecret.Data,
 		StringData: srcSecret.StringData,
 	}
 
-	// Add label to track resources created by ShareKube
+	// Add labels to track resources created by ShareKube
 	if newSecret.Labels == nil {
 		newSecret.Labels = make(map[string]string)
 	}
-	newSecret.Labels["sharekube.dev/copied"] = "true"
-	newSecret.Labels["sharekube.dev/source-namespace"] = sourceNamespace
+	// Only keep ownership labels - simplify tracking to the minimum needed for cleanup
+	newSecret.Labels["sharekube.dev/owner-name"] = h.sharekubeName
+	newSecret.Labels["sharekube.dev/owner-namespace"] = h.sharekubeNamespace
 
 	// Remove resource version from metadata
 	newSecret.ResourceVersion = ""
@@ -261,10 +274,10 @@ func (h *ResourceHandler) copyGenericResource(ctx context.Context, kind, name, s
 	newResource.SetSelfLink("")
 	newResource.SetManagedFields(nil)
 
-	// Add owner reference
-	ownerRefs := newResource.GetOwnerReferences()
-	ownerRefs = append(ownerRefs, h.ownerRef)
-	newResource.SetOwnerReferences(ownerRefs)
+	// Don't add owner reference for cross-namespace resources
+	// ownerRefs := newResource.GetOwnerReferences()
+	// ownerRefs = append(ownerRefs, h.ownerRef)
+	// newResource.SetOwnerReferences(ownerRefs)
 
 	// Remove status field if present
 	unstructured.RemoveNestedField(newResource.Object, "status")
@@ -274,8 +287,9 @@ func (h *ResourceHandler) copyGenericResource(ctx context.Context, kind, name, s
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels["sharekube.dev/copied"] = "true"
-	labels["sharekube.dev/source-namespace"] = sourceNamespace
+	// Only keep ownership labels - simplify tracking to the minimum needed for cleanup
+	labels["sharekube.dev/owner-name"] = h.sharekubeName
+	labels["sharekube.dev/owner-namespace"] = h.sharekubeNamespace
 	newResource.SetLabels(labels)
 
 	// Create the resource in the target namespace

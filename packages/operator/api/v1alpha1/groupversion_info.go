@@ -1,6 +1,6 @@
 // Package v1alpha1 contains API Schema definitions for the sharekube v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=sharekube.dev
+// +kubebuilder:object:generate=true
+// +groupName=sharekube.dev
 package v1alpha1
 
 import (
@@ -17,4 +17,4 @@ var (
 
 	// AddToScheme adds the types in this group-version to the given scheme.
 	AddToScheme = SchemeBuilder.AddToScheme
-) 
+)

@@ -9,10 +9,10 @@ import (
 type Resource struct {
 	// Kind is the type of Kubernetes resource (e.g., Deployment, Service)
 	Kind string `json:"kind"`
-	
+
 	// Name is the name of the resource to copy
 	Name string `json:"name"`
-	
+
 	// Namespace is the source namespace (optional, defaults to ShareKube CRD namespace)
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
@@ -23,7 +23,7 @@ type Resource struct {
 type TransformationRule struct {
 	// Kind is the resource type to apply transformations to
 	Kind string `json:"kind"`
-	
+
 	// RemoveFields is a list of fields to remove from the resource
 	// +optional
 	RemoveFields []string `json:"removeFields,omitempty"`
@@ -34,7 +34,7 @@ type TransformationRule struct {
 type TargetCluster struct {
 	// Name of the target cluster
 	Name string `json:"name"`
-	
+
 	// KubeconfigSecret is the name of the secret containing the kubeconfig
 	KubeconfigSecret string `json:"kubeconfigSecret"`
 }
@@ -43,17 +43,17 @@ type TargetCluster struct {
 type ShareKubeSpec struct {
 	// TargetNamespace is the destination namespace for copied resources
 	TargetNamespace string `json:"targetNamespace"`
-	
+
 	// TTL is the time-to-live for the preview environment (e.g., 1h, 24h, 7d)
 	TTL string `json:"ttl"`
-	
+
 	// Resources is the list of resources to be copied
 	Resources []Resource `json:"resources"`
-	
+
 	// TransformationRules is the list of transformation rules to apply (future feature)
 	// +optional
 	TransformationRules []TransformationRule `json:"transformationRules,omitempty"`
-	
+
 	// TargetCluster is the configuration for a remote cluster (future feature)
 	// +optional
 	TargetCluster *TargetCluster `json:"targetCluster,omitempty"`
@@ -64,19 +64,19 @@ type ShareKubeStatus struct {
 	// Phase is the current phase of the ShareKube resource
 	// +optional
 	Phase string `json:"phase,omitempty"`
-	
+
 	// CreationTime is when the preview environment was created
 	// +optional
 	CreationTime *metav1.Time `json:"creationTime,omitempty"`
-	
+
 	// ExpirationTime is when the preview environment will be deleted
 	// +optional
 	ExpirationTime *metav1.Time `json:"expirationTime,omitempty"`
-	
+
 	// CopiedResources is the list of resources that were successfully copied
 	// +optional
 	CopiedResources []string `json:"copiedResources,omitempty"`
-	
+
 	// Conditions represent the latest available observations of the ShareKube's state
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
@@ -103,7 +103,7 @@ func (in *ShareKube) DeepCopyInto(out *ShareKube) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	
+
 	in.Spec.DeepCopyInto(&out.Spec)
 	in.Status.DeepCopyInto(&out.Status)
 }
@@ -126,13 +126,13 @@ func (in *ShareKube) DeepCopyObject() runtime.Object {
 // DeepCopyInto for ShareKubeSpec
 func (in *ShareKubeSpec) DeepCopyInto(out *ShareKubeSpec) {
 	*out = *in
-	
+
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
 		*out = make([]Resource, len(*in))
 		copy(*out, *in)
 	}
-	
+
 	if in.TransformationRules != nil {
 		in, out := &in.TransformationRules, &out.TransformationRules
 		*out = make([]TransformationRule, len(*in))
@@ -140,7 +140,7 @@ func (in *ShareKubeSpec) DeepCopyInto(out *ShareKubeSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	
+
 	if in.TargetCluster != nil {
 		in, out := &in.TargetCluster, &out.TargetCluster
 		*out = new(TargetCluster)
@@ -161,23 +161,23 @@ func (in *TransformationRule) DeepCopyInto(out *TransformationRule) {
 // DeepCopyInto for ShareKubeStatus
 func (in *ShareKubeStatus) DeepCopyInto(out *ShareKubeStatus) {
 	*out = *in
-	
+
 	if in.CreationTime != nil {
 		in, out := &in.CreationTime, &out.CreationTime
 		*out = (*in).DeepCopy()
 	}
-	
+
 	if in.ExpirationTime != nil {
 		in, out := &in.ExpirationTime, &out.ExpirationTime
 		*out = (*in).DeepCopy()
 	}
-	
+
 	if in.CopiedResources != nil {
 		in, out := &in.CopiedResources, &out.CopiedResources
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	
+
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]metav1.Condition, len(*in))
@@ -201,7 +201,7 @@ func (in *ShareKubeList) DeepCopyInto(out *ShareKubeList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
-	
+
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]ShareKube, len(*in))
@@ -228,4 +228,4 @@ func (in *ShareKubeList) DeepCopyObject() runtime.Object {
 
 func init() {
 	SchemeBuilder.Register(&ShareKube{}, &ShareKubeList{})
-} 
+}
