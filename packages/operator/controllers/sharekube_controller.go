@@ -103,11 +103,23 @@ func (r *ShareKubeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Check if TTL has expired
 	if sharekube.Status.ExpirationTime != nil && sharekube.Status.ExpirationTime.Before(&metav1.Time{Time: time.Now()}) {
-		logger.Info("TTL expired, deleting ShareKube resource")
+		logger.Info("TTL expired, deleting resources and ShareKube resource")
+
+		// Clean up resources using our label selector
+		err := r.cleanupResourcesWithLabels(ctx, sharekube)
+		if err != nil {
+			logger.Error(err, "Failed to clean up resources on TTL expiration")
+			// Requeue rather than failing completely
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+
+		// Now delete the ShareKube resource itself
 		if err := r.Delete(ctx, sharekube); err != nil {
 			logger.Error(err, "Failed to delete expired ShareKube resource")
-			return ctrl.Result{}, err
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
+
+		logger.Info("Successfully deleted expired ShareKube and its resources")
 		return ctrl.Result{}, nil
 	}
 
@@ -228,9 +240,9 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 	if controllerutil.ContainsFinalizer(sharekube, ShareKubeFinalizer) {
 		// We can't use Kubernetes owner references for cross-namespace cleanup
 		// so we must explicitly clean up resources with our labels
-		if err := r.cleanupResources(ctx, sharekube); err != nil {
+		if err := r.cleanupResourcesWithLabels(ctx, sharekube); err != nil {
 			logger.Error(err, "Failed to clean up resources")
-			return ctrl.Result{}, err
+			// Continue with finalizer removal to prevent blocking deletion
 		}
 
 		// Remove finalizer to allow deletion
@@ -247,7 +259,7 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 // cleanupResources removes resources that were created by this ShareKube
 func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *sharekubev1alpha1.ShareKube) error {
 	logger := log.FromContext(ctx)
-	logger.Info("Cleaning up resources", "TargetNamespace", sharekube.Spec.TargetNamespace)
+	logger.Info("Cleaning up resources", "TargetNamespace", sharekube.Spec.TargetNamespace, "ShareKube", sharekube.Name)
 
 	// Create Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(r.Config)
@@ -264,10 +276,15 @@ func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *s
 		sharekube.Namespace,
 	)
 
+	logger.Info("Using label selector for cleanup", "LabelSelector", labelSelector)
+
 	// Delete deployments
-	if err := clientset.AppsV1().Deployments(sharekube.Spec.TargetNamespace).DeleteCollection(
-		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector}); err != nil {
+	err = clientset.AppsV1().Deployments(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
 		logger.Error(err, "Failed to delete Deployments")
+	} else {
+		logger.Info("Successfully deleted Deployments", "Namespace", sharekube.Spec.TargetNamespace)
 	}
 
 	// Delete services
@@ -278,6 +295,8 @@ func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *s
 			if err := clientset.CoreV1().Services(sharekube.Spec.TargetNamespace).Delete(
 				ctx, svc.Name, metav1.DeleteOptions{}); err != nil {
 				logger.Error(err, "Failed to delete Service", "Name", svc.Name)
+			} else {
+				logger.Info("Successfully deleted Service", "Name", svc.Name)
 			}
 		}
 	} else {
@@ -285,21 +304,101 @@ func (r *ShareKubeReconciler) cleanupResources(ctx context.Context, sharekube *s
 	}
 
 	// Delete configmaps
-	if err := clientset.CoreV1().ConfigMaps(sharekube.Spec.TargetNamespace).DeleteCollection(
-		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector}); err != nil {
+	err = clientset.CoreV1().ConfigMaps(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
 		logger.Error(err, "Failed to delete ConfigMaps")
+	} else {
+		logger.Info("Successfully deleted ConfigMaps", "Namespace", sharekube.Spec.TargetNamespace)
 	}
 
 	// Delete secrets
-	if err := clientset.CoreV1().Secrets(sharekube.Spec.TargetNamespace).DeleteCollection(
-		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector}); err != nil {
+	err = clientset.CoreV1().Secrets(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
 		logger.Error(err, "Failed to delete Secrets")
+	} else {
+		logger.Info("Successfully deleted Secrets", "Namespace", sharekube.Spec.TargetNamespace)
 	}
 
 	// Use dynamic client to delete any other resources that we might have created
 	// For brevity, we're omitting this, but in a real implementation you would use
 	// discovery to find all installed types and then delete those with our labels
 
+	logger.Info("Cleanup completed", "ShareKube", sharekube.Name, "TargetNamespace", sharekube.Spec.TargetNamespace)
+	return nil
+}
+
+// cleanupResourcesWithLabels removes resources that were created by this ShareKube using label selector
+func (r *ShareKubeReconciler) cleanupResourcesWithLabels(ctx context.Context, sharekube *sharekubev1alpha1.ShareKube) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Cleaning up resources", "TargetNamespace", sharekube.Spec.TargetNamespace, "ShareKube", sharekube.Name)
+
+	// Create Kubernetes clientset
+	clientset, err := kubernetes.NewForConfig(r.Config)
+	if err != nil {
+		logger.Error(err, "Failed to create Kubernetes clientset")
+		return err
+	}
+
+	// Define the label selector to match resources created by this ShareKube instance
+	// We don't need the 'copied' label since 'source-namespace' already implies it was copied
+	labelSelector := fmt.Sprintf(
+		"sharekube.dev/owner-name=%s,sharekube.dev/owner-namespace=%s",
+		sharekube.Name,
+		sharekube.Namespace,
+	)
+
+	logger.Info("Using label selector for cleanup", "LabelSelector", labelSelector)
+
+	// Delete deployments
+	err = clientset.AppsV1().Deployments(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		logger.Error(err, "Failed to delete Deployments")
+	} else {
+		logger.Info("Successfully deleted Deployments", "Namespace", sharekube.Spec.TargetNamespace)
+	}
+
+	// Delete services
+	services, err := clientset.CoreV1().Services(sharekube.Spec.TargetNamespace).List(
+		ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err == nil {
+		for _, svc := range services.Items {
+			if err := clientset.CoreV1().Services(sharekube.Spec.TargetNamespace).Delete(
+				ctx, svc.Name, metav1.DeleteOptions{}); err != nil {
+				logger.Error(err, "Failed to delete Service", "Name", svc.Name)
+			} else {
+				logger.Info("Successfully deleted Service", "Name", svc.Name)
+			}
+		}
+	} else {
+		logger.Error(err, "Failed to list Services")
+	}
+
+	// Delete configmaps
+	err = clientset.CoreV1().ConfigMaps(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		logger.Error(err, "Failed to delete ConfigMaps")
+	} else {
+		logger.Info("Successfully deleted ConfigMaps", "Namespace", sharekube.Spec.TargetNamespace)
+	}
+
+	// Delete secrets
+	err = clientset.CoreV1().Secrets(sharekube.Spec.TargetNamespace).DeleteCollection(
+		ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		logger.Error(err, "Failed to delete Secrets")
+	} else {
+		logger.Info("Successfully deleted Secrets", "Namespace", sharekube.Spec.TargetNamespace)
+	}
+
+	// Use dynamic client to delete any other resources that we might have created
+	// For brevity, we're omitting this, but in a real implementation you would use
+	// discovery to find all installed types and then delete those with our labels
+
+	logger.Info("Cleanup completed", "ShareKube", sharekube.Name, "TargetNamespace", sharekube.Spec.TargetNamespace)
 	return nil
 }
 
