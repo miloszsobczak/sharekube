@@ -25,17 +25,17 @@ import (
 // ShareKubeReconciler reconciles a ShareKube object
 type ShareKubeReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Config    *rest.Config
-	DynClient dynamic.Interface
+	Scheme             *runtime.Scheme
+	Config             *rest.Config
+	DynClient          dynamic.Interface
+	PermissionsManager *PermissionsManager
 }
 
 //+kubebuilder:rbac:groups=sharekube.dev,resources=sharekubes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=sharekube.dev,resources=sharekubes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=sharekube.dev,resources=sharekubes/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch;create
-//+kubebuilder:rbac:groups=core,resources=services;configmaps;secrets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 
 // The ShareKubeFinalizer is used to clean up resources when a ShareKube resource is deleted
 const ShareKubeFinalizer = "sharekube.dev/finalizer"
@@ -103,7 +103,7 @@ func (r *ShareKubeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Check if TTL has expired
 	if sharekube.Status.ExpirationTime != nil && sharekube.Status.ExpirationTime.Before(&metav1.Time{Time: time.Now()}) {
-		logger.Info("TTL expired, deleting resources and ShareKube resource")
+		logger.Info("TTL expired, deleting ShareKube resource")
 
 		// Clean up resources using our label selector
 		err := r.cleanupResourcesWithLabels(ctx, sharekube)
@@ -121,6 +121,16 @@ func (r *ShareKubeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 		logger.Info("Successfully deleted expired ShareKube and its resources")
 		return ctrl.Result{}, nil
+	}
+
+	// Ensure dynamic permissions
+	if err := r.PermissionsManager.EnsurePermissions(ctx, sharekube); err != nil {
+		logger.Error(err, "Failed to ensure dynamic permissions")
+		sharekube.Status.Phase = "Error"
+		if updateErr := r.Status().Update(ctx, sharekube); updateErr != nil {
+			logger.Error(updateErr, "Failed to update ShareKube status after permission error")
+		}
+		return ctrl.Result{}, err
 	}
 
 	// Ensure target namespace exists
@@ -238,6 +248,12 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 
 	// Check if finalizer is present
 	if controllerutil.ContainsFinalizer(sharekube, ShareKubeFinalizer) {
+		// Clean up dynamic permissions
+		if err := r.PermissionsManager.CleanupPermissions(ctx, sharekube); err != nil {
+			logger.Error(err, "Failed to clean up dynamic permissions")
+			// Continue with resource cleanup
+		}
+
 		// We can't use Kubernetes owner references for cross-namespace cleanup
 		// so we must explicitly clean up resources with our labels
 		if err := r.cleanupResourcesWithLabels(ctx, sharekube); err != nil {
@@ -248,7 +264,6 @@ func (r *ShareKubeReconciler) handleDeletion(ctx context.Context, sharekube *sha
 		// Remove finalizer to allow deletion
 		controllerutil.RemoveFinalizer(sharekube, ShareKubeFinalizer)
 		if err := r.Update(ctx, sharekube); err != nil {
-			logger.Error(err, "Failed to remove finalizer")
 			return ctrl.Result{}, err
 		}
 	}
@@ -402,8 +417,13 @@ func (r *ShareKubeReconciler) cleanupResourcesWithLabels(ctx context.Context, sh
 	return nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controller with the Manager
 func (r *ShareKubeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Initialize PermissionsManager if not already set
+	if r.PermissionsManager == nil {
+		r.PermissionsManager = NewPermissionsManager(r.Client, r.Scheme)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sharekubev1alpha1.ShareKube{}).
 		Complete(r)

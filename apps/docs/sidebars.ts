@@ -27,6 +27,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'doc',
+      id: 'dynamic-permissions',
+      label: 'Dynamic Permissions',
+    },
+    {
+      type: 'doc',
       id: 'future-roadmap',
       label: 'Future Roadmap',
     },

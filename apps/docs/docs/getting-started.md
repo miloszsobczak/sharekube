@@ -304,10 +304,18 @@ spec:
     # Configuration
     - kind: ConfigMap
       name: sample-app-config
+  
+  # Enable dynamic RBAC permissions (enhanced security)
+  accessControl:
+    restrict: true
+    allowedSourceNamespaces:
+      - dev
+    allowedTargetNamespaces:
+      - preview
 EOF
 ```
 
-### 3. Verify Your Preview Environment
+### 3. Verify Your Preview Environment and Permissions
 
 Check if the ShareKube resource was processed:
 
@@ -316,6 +324,20 @@ kubectl get sharekube sample-app-preview -n dev -o yaml
 ```
 
 Look for the `status.phase` field, which should be set to `Ready` when the preview environment has been successfully created.
+
+Also, check the `status.dynamicPermissions` field which tracks the dynamically created RBAC permissions. You should see roles created in both source and target namespaces.
+
+You can examine the created roles and role bindings:
+
+```bash
+# List the dynamic roles
+kubectl get roles -n dev -l sharekube.dev/owner-name=sample-app-preview
+kubectl get roles -n preview -l sharekube.dev/owner-name=sample-app-preview
+
+# Check the role details
+kubectl describe role sharekube-sample-app-preview-source -n dev
+kubectl describe role sharekube-sample-app-preview-target -n preview
+```
 
 Verify that all resources were copied to the preview namespace:
 
@@ -376,5 +398,6 @@ Now that you've set up ShareKube and created your first preview environment, you
 
 - Learn more about the [ShareKube architecture](overview)
 - Explore the [CRD API Reference](api-reference)
+- Read about [Dynamic Permissions](dynamic-permissions) for enhanced security
 - Check out the [Future Roadmap](future-roadmap)
 - [Contribute](contributing) to the ShareKube project - See our [Contributing Guide](contributing) for information on setting up a development environment 

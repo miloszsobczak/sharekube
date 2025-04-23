@@ -50,23 +50,10 @@ rules:
   - watch
   - create
 - apiGroups:
-  - ""
+  - rbac.authorization.k8s.io
   resources:
-  - services
-  - configmaps
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - apps
-  resources:
-  - deployments
+  - roles
+  - rolebindings
   verbs:
   - get
   - list
@@ -126,7 +113,7 @@ spec:
         imagePullPolicy: Always
         args:
         - --health-probe-bind-address=:8081
-        - --metrics-bind-address=:8080
+        - --metrics-bind-address=:8888
         - --leader-elect
         securityContext:
           allowPrivilegeEscalation: false

@@ -34,6 +34,7 @@ Standard Kubernetes resource metadata.
 | `resources` | `Resource[]` | Yes | List of resources to be copied |
 | `transformationRules` | `TransformationRule[]` | No | Future feature: Rules for modifying resources during copy |
 | `targetCluster` | `TargetCluster` | No | Future feature: Remote cluster configuration |
+| `accessControl` | `AccessControl` | No | Dynamic permission settings for resource access |
 
 ### Resource
 
@@ -56,6 +57,14 @@ Standard Kubernetes resource metadata.
 |-------|------|----------|-------------|
 | `name` | `string` | Yes | Name of the target cluster |
 | `kubeconfigSecret` | `string` | Yes | Name of the Secret containing kubeconfig for the target cluster |
+
+### AccessControl
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `restrict` | `boolean` | No | Enable fine-grained dynamic permissions (default: false) |
+| `allowedSourceNamespaces` | `string[]` | No | List of namespaces that can be used as sources |
+| `allowedTargetNamespaces` | `string[]` | No | List of namespaces that can be used as targets |
 
 ## Example
 
@@ -88,6 +97,15 @@ spec:
     - kind: Service
       name: my-app-service
       # 'namespace' is omitted, so the operator should assume the default source namespace ("dev")
+      
+  # Enables dynamic permissions for enhanced security
+  accessControl:
+    restrict: true      # Enable fine-grained permission creation
+    allowedSourceNamespaces:
+      - dev
+      - config
+    allowedTargetNamespaces:
+      - preview-*
       
   # transformationRules: This section is a planned future improvement.
   # It will enable dynamic manipulation of the manifest by removing fields that might cause conflicts,
@@ -122,6 +140,17 @@ The `ttl` field specifies how long the preview environment should exist. After t
 2. Set the ShareKube CRD status to indicate completion
 3. Not delete the target namespace itself (this should be handled separately)
 
+### Dynamic Permissions
+
+When `accessControl.restrict` is set to `true`, ShareKube will:
+
+1. Create fine-grained Roles and RoleBindings in both source and target namespaces
+2. Only grant permissions for the exact resource types being copied
+3. Use read-only permissions in source namespaces and full permissions in target namespaces
+4. Clean up permissions automatically when the ShareKube resource is deleted
+
+For more details, see the [Dynamic Permissions](./dynamic-permissions.md) documentation.
+
 ### Resource Tracking and Cleanup
 
 Since Kubernetes owner references don't work across namespaces, ShareKube uses a minimalist label-based approach to track and clean up resources:
@@ -152,6 +181,9 @@ status:
   copiedResources:          # List of resources that were successfully copied
     - "Deployment/default/my-app"
     - "Service/default/my-app-svc"
+  dynamicPermissions:       # List of dynamic permissions created for this ShareKube
+    - "dev/sharekube-my-preview-source"
+    - "preview/sharekube-my-preview-target"
   conditions:               # List of conditions for more detailed status
     - type: ResourcesCopied
       status: "True"

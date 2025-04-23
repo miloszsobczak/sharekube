@@ -14,3 +14,11 @@ spec:
     # Configuration
     - kind: ConfigMap
       name: sample-app-config 
+  
+  # Enable dynamic RBAC permissions
+  accessControl:
+    restrict: true
+    allowedSourceNamespaces:
+      - dev
+    allowedTargetNamespaces:
+      - preview 

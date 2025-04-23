@@ -39,6 +39,21 @@ type TargetCluster struct {
 	KubeconfigSecret string `json:"kubeconfigSecret"`
 }
 
+// AccessControl defines dynamic permission settings for ShareKube
+type AccessControl struct {
+	// Restrict specifies if resource access should be restricted to only what's needed
+	// +optional
+	Restrict bool `json:"restrict,omitempty"`
+
+	// AllowedSourceNamespaces restricts which namespaces can be used as source
+	// +optional
+	AllowedSourceNamespaces []string `json:"allowedSourceNamespaces,omitempty"`
+
+	// AllowedTargetNamespaces restricts which namespaces can be used as target
+	// +optional
+	AllowedTargetNamespaces []string `json:"allowedTargetNamespaces,omitempty"`
+}
+
 // ShareKubeSpec defines the desired state of ShareKube
 type ShareKubeSpec struct {
 	// TargetNamespace is the destination namespace for copied resources
@@ -57,6 +72,10 @@ type ShareKubeSpec struct {
 	// TargetCluster is the configuration for a remote cluster (future feature)
 	// +optional
 	TargetCluster *TargetCluster `json:"targetCluster,omitempty"`
+
+	// AccessControl defines permission settings for this ShareKube resource
+	// +optional
+	AccessControl *AccessControl `json:"accessControl,omitempty"`
 }
 
 // ShareKubeStatus defines the observed state of ShareKube
@@ -80,6 +99,10 @@ type ShareKubeStatus struct {
 	// Conditions represent the latest available observations of the ShareKube's state
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// DynamicPermissions tracks the permissions created for this ShareKube instance
+	// +optional
+	DynamicPermissions []string `json:"dynamicPermissions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -146,6 +169,27 @@ func (in *ShareKubeSpec) DeepCopyInto(out *ShareKubeSpec) {
 		*out = new(TargetCluster)
 		**out = **in
 	}
+
+	if in.AccessControl != nil {
+		in, out := &in.AccessControl, &out.AccessControl
+		*out = new(AccessControl)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+// DeepCopyInto for AccessControl
+func (in *AccessControl) DeepCopyInto(out *AccessControl) {
+	*out = *in
+	if in.AllowedSourceNamespaces != nil {
+		in, out := &in.AllowedSourceNamespaces, &out.AllowedSourceNamespaces
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.AllowedTargetNamespaces != nil {
+		in, out := &in.AllowedTargetNamespaces, &out.AllowedTargetNamespaces
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 }
 
 // DeepCopyInto for TransformationRule
@@ -184,6 +228,12 @@ func (in *ShareKubeStatus) DeepCopyInto(out *ShareKubeStatus) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+
+	if in.DynamicPermissions != nil {
+		in, out := &in.DynamicPermissions, &out.DynamicPermissions
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 }
 

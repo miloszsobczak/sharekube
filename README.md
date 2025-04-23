@@ -34,6 +34,7 @@ This workflow enables powerful use cases:
 - **Time-to-Live (TTL)**: Automatically clean up resources after a configurable period
 - **Non-Destructive**: Original resources remain untouched in their source namespaces
 - **Kubernetes Native**: Uses standard CRDs and follows Kubernetes patterns
+- **Dynamic RBAC Permissions**: Fine-grained security controls with namespace-scoped permissions
 
 ## 🚀 Quick Start
 
@@ -56,6 +57,8 @@ spec:
       name: my-application
     - kind: Service
       name: my-application-svc
+  accessControl:
+    restrict: true
 EOF
 
 # Check that resources were copied
@@ -71,6 +74,7 @@ For comprehensive documentation, visit [docs.sharekube.dev](https://docs.shareku
 - [Overview](https://docs.sharekube.dev/overview)
 - [Getting Started](https://docs.sharekube.dev/getting-started)
 - [API Reference](https://docs.sharekube.dev/api-reference)
+- [Dynamic Permissions](https://docs.sharekube.dev/dynamic-permissions)
 - [Future Roadmap](https://docs.sharekube.dev/future-roadmap)
 - [Contributing](https://docs.sharekube.dev/contributing)
 

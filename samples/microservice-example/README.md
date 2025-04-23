@@ -79,6 +79,23 @@ kubectl get all -n preview -l app=sample-app
 kubectl get configmap -n preview -l app=sample-app
 ```
 
+4. Check the dynamic RBAC permissions that were created:
+
+```bash
+# Check the dynamic permissions in the status
+kubectl get sharekube -n dev sample-app-preview -o=jsonpath='{.status.dynamicPermissions}'
+
+# List the dynamic roles
+kubectl get roles -n dev | grep sample-app-preview
+kubectl get roles -n preview | grep sample-app-preview
+
+# Examine role details and permissions
+kubectl describe role sharekube-sample-app-preview-source -n dev
+kubectl describe role sharekube-sample-app-preview-target -n preview
+```
+
+The dynamic permissions ensure that the operator only has the minimum necessary permissions to copy and manage the specific resources you've defined in your ShareKube resource.
+
 ## Accessing the Application
 
 You can use port forwarding to access the frontend service:

@@ -52,6 +52,21 @@ kubectl get sharekube -n dev sample-app-preview -o yaml
 
 Look for the `status.phase` field, which should be set to `Ready` when the preview environment has been successfully created.
 
+7. Verify the dynamic permissions that were created:
+
+```bash
+# Check the dynamic permissions in the status
+kubectl get sharekube -n dev sample-app-preview -o=jsonpath='{.status.dynamicPermissions}'
+
+# List the dynamic roles
+kubectl get roles -n dev -l sharekube.dev/owner-name=sample-app-preview
+kubectl get roles -n preview -l sharekube.dev/owner-name=sample-app-preview
+
+# Check the role details
+kubectl describe role sharekube-sample-app-preview-source -n dev
+kubectl describe role sharekube-sample-app-preview-target -n preview
+```
+
 ## Testing Changes
 
 Try modifying resources in the preview namespace without affecting the original development environment:
